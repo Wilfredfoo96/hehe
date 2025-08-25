@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 
 // User hooks
 export const useUserByUsername = (username: string | null) => {
@@ -28,7 +29,7 @@ export const useAllVideos = () => {
 };
 
 export const useVideosByCreator = (creatorId: string | null) => {
-  return useQuery(api.videos.getVideosByCreator, creatorId ? { creatorId: creatorId as any } : "skip");
+  return useQuery(api.videos.getVideosByCreator, creatorId ? { creatorId: creatorId as Id<"users"> } : "skip");
 };
 
 export const useTrendingVideos = () => {
@@ -36,7 +37,7 @@ export const useTrendingVideos = () => {
 };
 
 export const useVideoById = (videoId: string | null) => {
-  return useQuery(api.videos.getVideoById, videoId ? { videoId: videoId as any } : "skip");
+  return useQuery(api.videos.getVideoById, videoId ? { videoId: videoId as Id<"videos"> } : "skip");
 };
 
 // User mutations

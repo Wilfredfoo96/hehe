@@ -2,6 +2,7 @@
 
 import { useAllUsers } from "@/hooks/useConvex";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function UsersPage() {
   const users = useAllUsers();
@@ -37,9 +38,11 @@ export default function UsersPage() {
                   {/* Profile Image */}
                   {user.profile_img && (
                     <div className="text-center mb-4">
-                      <img 
+                      <Image 
                         src={user.profile_img} 
                         alt={user.display_name}
+                        width={80}
+                        height={80}
                         className="w-20 h-20 rounded-full object-cover mx-auto"
                       />
                     </div>

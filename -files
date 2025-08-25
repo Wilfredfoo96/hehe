@@ -1,0 +1,19 @@
+[33mcommit 80bc059382ca22507a85a1e8e58a6c3cafb076a2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: WilfredFoo96 <wilfredfoo96@gmail.com>
+Date:   Tue Aug 26 06:16:11 2025 +0800
+
+    Add Vercel Blob integration for video storage and fix TypeScript issues
+
+.eslintrc.json
+VERCEL_BLOB_SETUP.md
+package-lock.json
+package.json
+public/video-placeholder.svg
+src/app/admin/page.tsx
+src/app/api/upload-video/route.ts
+src/app/reels/page.tsx
+src/app/reels/upload/page.tsx
+src/components/AdminDashboard.tsx
+src/hooks/useConvex.ts
+src/hooks/useRoles.ts
+src/lib/roles.ts
