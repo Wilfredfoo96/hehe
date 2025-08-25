@@ -1,0 +1,16 @@
+{
+  "project": "nautical-malamute-592",
+  "team": "nautical-malamute-592",
+  "prodUrl": "https://nautical-malamute-592.convex.cloud",
+  "functions": {
+    "config": {
+      "schemaPath": "schema.ts"
+    }
+  },
+  "authInfo": [
+    {
+      "domain": "clerk",
+      "applicationID": "clerk"
+    }
+  ]
+}
