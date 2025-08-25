@@ -4,6 +4,9 @@ import { put } from '@vercel/blob';
 // Configure maximum file size (200MB)
 const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB in bytes
 
+// Recommended multipart upload threshold (100MB)
+const MULTIPART_THRESHOLD = 100 * 1024 * 1024; // 100MB
+
 export async function POST(request: NextRequest) {
   try {
     // Check content length header first
@@ -60,27 +63,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename with timestamp and random suffix
-    const timestamp = Date.now();
+    // Generate organized filename with date-based folder structure
+    const now = new Date();
+    const dateFolder = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const timestamp = now.getTime();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
-    const filename = `videos/${timestamp}-${randomSuffix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    
+    // Create organized folder structure: videos/YYYY-MM-DD/timestamp-random-filename
+    const filename = `videos/${dateFolder}/${timestamp}-${randomSuffix}-${sanitizedName}`;
     
     console.log(`Uploading file: ${filename}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB, Type: ${file.type}`);
 
+    // Configure upload options based on file size and type
+    const uploadOptions = {
+      access: 'public' as const,
+      addRandomSuffix: false, // We're already adding our own random suffix
+      // Enable multipart uploads for files larger than 100MB (better performance)
+      multipart: file.size > MULTIPART_THRESHOLD,
+      // Set cache control for videos (1 month default, but can be customized)
+      cacheControlMaxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+    };
+
     // Upload to Vercel Blob
-    const blob = await put(filename, file, {
-      access: 'public',
-      addRandomSuffix: false,
-    });
+    const blob = await put(filename, file, uploadOptions);
 
     console.log(`Upload successful: ${blob.url}`);
+    console.log(`Blob details:`, {
+      pathname: blob.pathname,
+      size: blob.size,
+      uploadedAt: blob.uploadedAt,
+      url: blob.url
+    });
 
     return NextResponse.json({
       success: true,
       url: blob.url,
       filename: filename,
+      pathname: blob.pathname,
       size: file.size,
       type: file.type,
+      uploadedAt: blob.uploadedAt,
+      // Include download URL for force-download scenarios
+      downloadUrl: blob.downloadUrl,
     });
 
   } catch (error) {
@@ -102,6 +127,21 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'Upload timeout. Please try again with a smaller file.' },
           { status: 408 }
+        );
+      }
+
+      // Handle Vercel Blob specific errors
+      if (error.message.includes('BLOB_ACCESS_DENIED')) {
+        return NextResponse.json(
+          { error: 'Access denied. Please check your Vercel Blob configuration.' },
+          { status: 403 }
+        );
+      }
+
+      if (error.message.includes('BLOB_STORE_NOT_FOUND')) {
+        return NextResponse.json(
+          { error: 'Blob store not found. Please configure Vercel Blob for your project.' },
+          { status: 500 }
         );
       }
     }

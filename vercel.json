@@ -1,7 +1,7 @@
 {
   "functions": {
     "src/app/api/upload-video/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     }
   },
   "routes": [
@@ -13,5 +13,11 @@
         "Access-Control-Allow-Headers": "Content-Type"
       }
     }
-  ]
+  ],
+  "regions": ["iad1"],
+  "build": {
+    "env": {
+      "BLOB_READ_WRITE_TOKEN": "@blob-read-write-token"
+    }
+  }
 }
