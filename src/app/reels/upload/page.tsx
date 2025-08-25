@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useUpsertUser, useUserByEmail } from "@/hooks/useConvex";
+import { useUserByEmail } from "@/hooks/useConvex";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
@@ -17,7 +17,6 @@ export default function ReelsUploadPage() {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const upsertUser = useUpsertUser();
   const createVideo = useMutation(api.videos.createVideo);
   
   // Get user profile data
@@ -100,12 +99,26 @@ export default function ReelsUploadPage() {
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      // Store video locally in public/videos folder
-      const videoFileName = `${Date.now()}-${videoFile.name}`;
-      const videoUrl = `/videos/${videoFileName}`;
+      // Upload video to Vercel Blob
+      setMessage("Uploading video to Vercel Blob...");
       
-      // In a real app, you'd upload to cloud storage here
-      // For now, we'll store locally for testing
+      const formData = new FormData();
+      formData.append('video', videoFile);
+      
+      const uploadResponse = await fetch('/api/upload-video', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+      
+      const uploadData = await uploadResponse.json();
+      const videoUrl = uploadData.url;
+      
+      setMessage("Video uploaded successfully! Creating database record...");
       
       // Create video record in database
       await createVideo({

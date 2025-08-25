@@ -24,19 +24,19 @@ export const useUsersByCompanyType = (companyType: string | null) => {
 
 // Video hooks
 export const useAllVideos = () => {
-  return useQuery(api.videos.getAllVideos);
+  return useQuery(api.videos.getAllVideos, {});
 };
 
 export const useVideosByCreator = (creatorId: string | null) => {
-  return useQuery(api.videos.getVideosByCreator, creatorId ? { creatorId } : "skip");
+  return useQuery(api.videos.getVideosByCreator, creatorId ? { creatorId: creatorId as any } : "skip");
 };
 
 export const useTrendingVideos = () => {
-  return useQuery(api.videos.getTrendingVideos);
+  return useQuery(api.videos.getTrendingVideos, {});
 };
 
 export const useVideoById = (videoId: string | null) => {
-  return useQuery(api.videos.getVideoById, videoId ? { videoId } : "skip");
+  return useQuery(api.videos.getVideoById, videoId ? { videoId: videoId as any } : "skip");
 };
 
 // User mutations

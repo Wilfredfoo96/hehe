@@ -12,6 +12,7 @@
     "@clerk/clerk-react": "^5.43.1",
     "@clerk/nextjs": "^6.31.4",
     "@clerk/themes": "^2.4.13",
+    "@vercel/blob": "^1.1.1",
     "convex": "^1.26.1",
     "next": "15.5.0",
     "react": "19.1.0",
