@@ -40,20 +40,35 @@ export function DashboardContent() {
             </div>
           </Link>
 
-          <Link
-            href="/profile/view"
-            className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-          >
-            <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 dark:text-purple-400 text-lg">🔍</span>
-              </div>
-            </div>
-            <div className="ml-4">
-              <h3 className="font-medium text-gray-900 dark:text-white">Search Profiles</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Find specific users</p>
-            </div>
-          </Link>
+                     <Link
+             href="/profile/view"
+             className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+           >
+             <div className="flex-shrink-0">
+               <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                 <span className="text-purple-600 dark:text-purple-400 text-lg">🔍</span>
+               </div>
+             </div>
+             <div className="ml-4">
+               <h3 className="font-medium text-gray-900 dark:text-white">Search Profiles</h3>
+               <p className="text-sm text-gray-600 dark:text-gray-400">Find specific users</p>
+             </div>
+           </Link>
+
+           <Link
+             href="/reels"
+             className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+           >
+             <div className="flex-shrink-0">
+               <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                 <span className="text-orange-600 dark:text-orange-400 text-lg">🎬</span>
+               </div>
+             </div>
+             <div className="ml-4">
+               <h3 className="font-medium text-gray-900 dark:text-white">Browse Reels</h3>
+               <p className="text-sm text-gray-600 dark:text-gray-400">Watch and share videos</p>
+             </div>
+           </Link>
 
           <div className="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
             <div className="flex-shrink-0">

@@ -43,6 +43,13 @@ export default function Header() {
                 >
                   Users
                 </Link>
+                
+                <Link
+                  href="/reels"
+                  className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Reels
+                </Link>
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     Welcome, {user?.firstName || user?.username || "User"}!

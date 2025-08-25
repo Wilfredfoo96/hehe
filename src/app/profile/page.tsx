@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 import { useUpsertUser } from "@/hooks/useConvex";
 import Link from "next/link";
 
 interface UserFormData {
   display_name: string;
   username: string;
+  email: string;
   bio: string;
   profile_img: string;
   company_name: string;
@@ -20,9 +22,11 @@ interface UserFormData {
 }
 
 export default function ProfilePage() {
+  const { user } = useUser();
   const [formData, setFormData] = useState<UserFormData>({
     display_name: "",
     username: "",
+    email: "",
     bio: "",
     profile_img: "",
     company_name: "",
@@ -39,6 +43,19 @@ export default function ProfilePage() {
   const [message, setMessage] = useState("");
   const upsertUser = useUpsertUser();
 
+  // Auto-fill email and username when user is loaded
+  useEffect(() => {
+    if (user?.emailAddresses?.[0]?.emailAddress) {
+      const email = user.emailAddresses[0].emailAddress;
+      setFormData(prev => ({
+        ...prev,
+        email: email,
+        // Auto-generate username from email if not set
+        username: prev.username || email.split('@')[0]
+      }));
+    }
+  }, [user]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -50,8 +67,8 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.display_name.trim() || !formData.username.trim()) {
-      setMessage("Display name and username are required!");
+    if (!formData.display_name.trim() || !formData.username.trim() || !formData.email.trim()) {
+      setMessage("Display name, username, and email are required!");
       return;
     }
 
@@ -65,6 +82,7 @@ export default function ProfilePage() {
       setFormData({
         display_name: "",
         username: "",
+        email: "",
         bio: "",
         profile_img: "",
         company_name: "",
@@ -164,6 +182,22 @@ export default function ProfilePage() {
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter your username"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your email"
                   />
                 </div>
 

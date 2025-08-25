@@ -12,6 +12,17 @@ export const getUserByUsername = query({
   },
 });
 
+// Get user by email
+export const getUserByEmail = query({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+  },
+});
+
 // Get user by company name
 export const getUsersByCompany = query({
   args: { companyName: v.string() },
@@ -28,6 +39,7 @@ export const upsertUser = mutation({
   args: {
     display_name: v.string(),
     username: v.string(),
+    email: v.string(),
     bio: v.optional(v.string()),
     profile_img: v.optional(v.string()),
     company_name: v.optional(v.string()),
@@ -42,13 +54,14 @@ export const upsertUser = mutation({
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
     if (existingUser) {
       // Update existing user
       return await ctx.db.patch(existingUser._id, {
         display_name: args.display_name,
+        email: args.email,
         bio: args.bio,
         profile_img: args.profile_img,
         company_name: args.company_name,
@@ -66,6 +79,7 @@ export const upsertUser = mutation({
       return await ctx.db.insert("users", {
         display_name: args.display_name,
         username: args.username,
+        email: args.email,
         bio: args.bio,
         profile_img: args.profile_img,
         company_name: args.company_name,
@@ -76,6 +90,11 @@ export const upsertUser = mutation({
         postal: args.postal,
         country: args.country,
         company_number: args.company_number,
+        followerCount: 0,
+        followingCount: 0,
+        videoCount: 0,
+        totalLikes: 0,
+        isVerified: false,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
