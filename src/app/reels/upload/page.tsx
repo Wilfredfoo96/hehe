@@ -108,11 +108,33 @@ export default function ReelsUploadPage() {
       const uploadResponse = await fetch('/api/upload-video', {
         method: 'POST',
         body: formData,
+        // Add timeout for large files
+        signal: AbortSignal.timeout(300000), // 5 minutes timeout
       });
       
       if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || 'Upload failed');
+        let errorMessage = 'Upload failed';
+        
+        try {
+          const errorData = await uploadResponse.json();
+          errorMessage = errorData.error || errorMessage;
+          
+          // Handle specific error types
+          if (uploadResponse.status === 413) {
+            errorMessage = `File too large: ${errorData.receivedSize || 'Unknown size'}. Maximum size is ${errorData.maxSize || '200MB'}.`;
+          } else if (uploadResponse.status === 400) {
+            errorMessage = `Invalid file: ${errorData.receivedType || 'Unknown type'}. Only video files are allowed.`;
+          }
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          if (uploadResponse.status === 413) {
+            errorMessage = 'File too large. Maximum size is 200MB.';
+          } else if (uploadResponse.status === 400) {
+            errorMessage = 'Invalid file type. Only video files are allowed.';
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const uploadData = await uploadResponse.json();
