@@ -6,6 +6,7 @@ import { useUserByEmail } from "@/hooks/useConvex";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import Link from "next/link";
+import { upload, type PutBlobResult } from '@vercel/blob/client';
 
 export default function ReelsUploadPage() {
   const { user } = useUser();
@@ -15,6 +16,7 @@ export default function ReelsUploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [message, setMessage] = useState("");
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [uploadedBlob, setUploadedBlob] = useState<PutBlobResult | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createVideo = useMutation(api.videos.createVideo);
@@ -39,6 +41,7 @@ export default function ReelsUploadPage() {
 
       setVideoFile(file);
       setMessage("");
+      setUploadedBlob(null); // Reset previous upload
       
       // Create preview
       const url = URL.createObjectURL(file);
@@ -75,95 +78,80 @@ export default function ReelsUploadPage() {
     setMessage("");
 
     try {
-      // Simulate video upload to cloud storage
-      // In production, you'd use services like AWS S3, Cloudinary, etc.
-      setUploadProgress(0);
-      
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      // Get video duration
+      // Get video duration first
       const duration = await getVideoDuration(videoFile);
       
-      // Simulate upload delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      // Upload video to Vercel Blob
+      // Use client-side upload to Vercel Blob
       setMessage("Uploading video to Vercel Blob...");
+      setUploadProgress(10);
       
-      const formData = new FormData();
-      formData.append('video', videoFile);
+      // Create organized filename with date structure
+      const now = new Date();
+      const dateFolder = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const timestamp = now.getTime();
+      const sanitizedName = videoFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filename = `videos/${dateFolder}/${timestamp}-${sanitizedName}`;
       
-      const uploadResponse = await fetch('/api/upload-video', {
-        method: 'POST',
-        body: formData,
-        // Add timeout for large files
-        signal: AbortSignal.timeout(300000), // 5 minutes timeout
+      setUploadProgress(20);
+      
+      // Upload directly to Vercel Blob using client upload
+      const blob = await upload(filename, videoFile, {
+        access: 'public',
+        handleUploadUrl: '/api/upload-video-client',
+        // Add metadata for the upload
+        clientPayload: {
+          userId: user.id,
+          userEmail: user.emailAddresses?.[0]?.emailAddress,
+          videoDuration: duration,
+          caption: caption.trim() || undefined,
+        },
       });
       
-      if (!uploadResponse.ok) {
-        let errorMessage = 'Upload failed';
-        
-        try {
-          const errorData = await uploadResponse.json();
-          errorMessage = errorData.error || errorMessage;
-          
-          // Handle specific error types
-          if (uploadResponse.status === 413) {
-            errorMessage = `File too large: ${errorData.receivedSize || 'Unknown size'}. Maximum size is ${errorData.maxSize || '200MB'}.`;
-          } else if (uploadResponse.status === 400) {
-            errorMessage = `Invalid file: ${errorData.receivedType || 'Unknown type'}. Only video files are allowed.`;
-          }
-        } catch (parseError) {
-          console.error('Error parsing error response:', parseError);
-          if (uploadResponse.status === 413) {
-            errorMessage = 'File too large. Maximum size is 200MB.';
-          } else if (uploadResponse.status === 400) {
-            errorMessage = 'Invalid file type. Only video files are allowed.';
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-      
-      const uploadData = await uploadResponse.json();
-      const videoUrl = uploadData.url;
+      setUploadProgress(80);
+      setUploadedBlob(blob);
       
       setMessage("Video uploaded successfully! Creating database record...");
       
       // Create video record in database
       await createVideo({
-        videoUrl,
+        videoUrl: blob.url,
         duration,
         caption: caption.trim() || undefined,
         creatorId: userProfile._id,
         creatorUsername: userProfile.username,
       });
 
+      setUploadProgress(100);
       setMessage("Video uploaded successfully! 🎉");
       
       // Reset form
       setVideoFile(null);
       setCaption("");
       setVideoPreview(null);
+      setUploadedBlob(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
       
     } catch (error) {
-      setMessage("Error uploading video. Please try again.");
       console.error("Upload error:", error);
+      
+      // Handle specific error types
+      if (error instanceof Error) {
+        if (error.message.includes('too large') || error.message.includes('413')) {
+          setMessage("File too large. Maximum size is 200MB.");
+        } else if (error.message.includes('network') || error.message.includes('timeout')) {
+          setMessage("Upload timeout. Please try again with a smaller file.");
+        } else if (error.message.includes('BLOB_ACCESS_DENIED')) {
+          setMessage("Access denied. Please check your Vercel Blob configuration.");
+        } else if (error.message.includes('BLOB_STORE_NOT_FOUND')) {
+          setMessage("Blob store not found. Please configure Vercel Blob for your project.");
+        } else {
+          setMessage(`Upload failed: ${error.message}`);
+        }
+      } else {
+        setMessage("Error uploading video. Please try again.");
+      }
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -173,6 +161,7 @@ export default function ReelsUploadPage() {
   const removeVideo = () => {
     setVideoFile(null);
     setVideoPreview(null);
+    setUploadedBlob(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -189,7 +178,7 @@ export default function ReelsUploadPage() {
 
           {message && (
             <div className={`mb-6 p-4 rounded-md ${
-              message.includes("Error") 
+              message.includes("Error") || message.includes("failed") || message.includes("denied") || message.includes("not found")
                 ? "bg-red-50 text-red-700 border border-red-200" 
                 : "bg-green-50 text-green-700 border border-green-200"
             }`}>
@@ -310,6 +299,7 @@ export default function ReelsUploadPage() {
               <li>• Keep videos under 60 seconds for maximum engagement</li>
               <li>• Add engaging captions to increase reach</li>
               <li>• Ensure good lighting and clear audio</li>
+              <li>• Large files (>100MB) will use optimized multipart uploads</li>
             </ul>
           </div>
         </div>
